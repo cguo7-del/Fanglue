@@ -41,10 +41,10 @@ export default function Home() {
           </p>
           
           {/* 主要行动按钮 */}
-          <button className="group relative px-12 py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white rounded-full text-xl font-semibold shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 transform hover:-translate-y-1">
+          <Link href="/ask-question" className="group relative inline-block px-12 py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white rounded-full text-xl font-semibold shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 transform hover:-translate-y-1">
             <span className="relative z-10">立即寻策</span>
             <div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 rounded-full blur opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
-          </button>
+          </Link>
         </div>
       </div>
 
