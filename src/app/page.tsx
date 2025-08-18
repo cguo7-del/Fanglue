@@ -1,263 +1,338 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Footer from '../components/Footer';
 
-export default function Home() {
-  const [question, setQuestion] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+interface FeaturedQuestion {
+  id: string;
+  question: string;
+  category: string;
+  preview: string;
+}
 
-  const tags = ['职场', '人际', '商业', '生活', '其他']
+export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [featuredQuestions, setFeaturedQuestions] = useState<FeaturedQuestion[]>([]);
+  const [quickQuestion, setQuickQuestion] = useState('');
 
-  const handleTagClick = (tag: string) => {
-    setSelectedTags((prev: string[]) => 
-      prev.includes(tag) 
-        ? prev.filter((t: string) => t !== tag)
-        : [...prev, tag]
-    )
-  }
+  useEffect(() => {
+    // 模拟获取精选问答
+    const mockFeaturedQuestions: FeaturedQuestion[] = [
+      {
+        id: '1',
+        question: '如何在困难面前保持内心平静？',
+        category: '人生哲学',
+        preview: '老子在《道德经》中说："上善若水，水善利万物而不争。"面对困难时，我们应该像水一样...'
+      },
+      {
+        id: '2',
+        question: '什么是真正的领导力？',
+        category: '治国理政',
+        preview: '孔子曰："为政以德，譬如北辰，居其所而众星共之。"真正的领导者应该以德服人...'
+      },
+      {
+        id: '3',
+        question: '如何处理商业竞争中的挑战？',
+        category: '商业智慧',
+        preview: '《孙子兵法》中说："知己知彼，百战不殆。"在商业竞争中，深入了解自己和对手...'
+      },
+      {
+        id: '4',
+        question: '怎样建立良好的人际关系？',
+        category: '人际关系',
+        preview: '孔子说："己所不欲，勿施于人。"建立良好人际关系的基础是换位思考和真诚待人...'
+      }
+    ];
+    setFeaturedQuestions(mockFeaturedQuestions);
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!question.trim()) return
-    
-    setIsLoading(true)
-    // TODO: 实现 API 调用
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 3000)
+  const handleQuickAsk = () => {
+    if (quickQuestion.trim()) {
+      if (!user) {
+        router.push('/auth');
+        return;
+      }
+      router.push(`/ask-question?q=${encodeURIComponent(quickQuestion.trim())}`);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleQuickAsk();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-amber-800">加载中...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-amber-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-amber-800">方略</h1>
-            <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-amber-700 hover:text-amber-900 font-medium border-b-2 border-amber-600">首页</a>
-              <a href="#ask-section" className="text-amber-700 hover:text-amber-900">提问</a>
-              <a href="#examples" className="text-amber-700 hover:text-amber-900">示例</a>
-              <a href="#about" className="text-amber-700 hover:text-amber-900">关于</a>
-            </nav>
+      {/* 导航栏 */}
+      <nav className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center mr-3">
+                <span className="text-white font-bold text-lg">方</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-amber-900">方略</h1>
+                <p className="text-amber-700 text-xs">古籍智慧现代应用</p>
+              </div>
+            </div>
+            
+            <div className="hidden md:flex space-x-6">
+              <Link href="/" className="text-amber-700 hover:text-amber-900 font-medium">
+                首页
+              </Link>
+              <Link href="/ask-question" className="text-amber-700 hover:text-amber-900 font-medium">
+                智能问答
+              </Link>
+              <Link href="/smart-search" className="text-amber-700 hover:text-amber-900 font-medium">
+                智能搜索
+              </Link>
+              {user && (
+                <Link href="/favorites" className="text-amber-700 hover:text-amber-900 font-medium">
+                  我的收藏
+                </Link>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  <span className="text-amber-700">欢迎，{user.email}</span>
+                  <Link 
+                    href="/profile" 
+                    className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    个人中心
+                  </Link>
+                </div>
+              ) : (
+                <Link 
+                  href="/auth" 
+                  className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  登录/注册
+                </Link>
+              )}
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
+      {/* 主要内容 */}
       <main>
-        {/* Hero Section */}
-        <section className="py-20 text-center">
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-5xl font-bold text-amber-900 mb-6">古籍智慧，现代应用</h2>
-            <p className="text-xl text-amber-700 mb-8 leading-relaxed">
-              方略帮助您将中国古代典籍中的智慧应用到现代问题中，提供结构化、可落地的解决方案
+        {/* 英雄区域 */}
+        <section className="py-20">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-5xl md:text-6xl font-bold text-amber-900 mb-6">
+              古籍智慧
+              <span className="block text-amber-700">现代应用</span>
+            </h1>
+            <p className="text-xl text-amber-800 mb-8 max-w-2xl mx-auto leading-relaxed">
+              让千年古籍中的智慧为您的现代生活提供指导，通过AI技术连接古代先贤与现代思维
             </p>
-            <a 
-              href="#ask-section" 
-              className="inline-block bg-amber-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-amber-700 transition-colors shadow-lg"
-            >
-              开始提问
-            </a>
+            
+            {/* 快速提问 */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-amber-900 mb-4">快速提问</h3>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={quickQuestion}
+                    onChange={(e) => setQuickQuestion(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="请输入您的问题，让古代智慧为您解答..."
+                    className="flex-1 px-4 py-3 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleQuickAsk}
+                    disabled={!quickQuestion.trim()}
+                    className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+                  >
+                    提问
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link 
+                href="/ask-question" 
+                className="bg-amber-600 text-white px-8 py-4 rounded-lg text-lg font-medium hover:bg-amber-700 transition-colors shadow-lg"
+              >
+                开始智能问答
+              </Link>
+              <Link 
+                href="/smart-search" 
+                className="bg-white text-amber-600 px-8 py-4 rounded-lg text-lg font-medium hover:bg-amber-50 transition-colors shadow-lg border border-amber-200"
+              >
+                智能搜索古籍
+              </Link>
+            </div>
           </div>
         </section>
 
-        {/* Ask Section */}
-        <section id="ask-section" className="py-16 bg-white">
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-amber-900 mb-12">提出您的问题</h2>
-            
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div>
-                <label htmlFor="question" className="block text-lg font-medium text-amber-800 mb-3">
-                  您面临什么问题或挑战？
-                </label>
-                <textarea
-                  id="question"
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                  rows={5}
-                  className="w-full px-4 py-3 border-2 border-amber-200 rounded-lg focus:border-amber-500 focus:outline-none text-gray-700 resize-none"
-                  placeholder="例如：如何在团队中处理与同事的冲突？"
-                />
+        {/* 特色功能 */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-amber-900 text-center mb-12">核心功能</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900 mb-3">智能问答</h3>
+                <p className="text-amber-700">基于古代典籍的AI问答系统，为您的人生困惑提供古代智慧的指导</p>
               </div>
               
-              <div>
-                <label className="block text-lg font-medium text-amber-800 mb-3">
-                  问题领域（可选）
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  {tags.map(tag => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleTagClick(tag)}
-                      className={`px-4 py-2 rounded-full border-2 transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-amber-600 text-white border-amber-600'
-                          : 'bg-white text-amber-700 border-amber-300 hover:border-amber-500'
-                      }`}
-                    >
-                      {tag}
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900 mb-3">智能搜索</h3>
+                <p className="text-amber-700">在海量古籍中快速找到相关内容，支持语义搜索和精确匹配</p>
+              </div>
+              
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900 mb-3">个人收藏</h3>
+                <p className="text-amber-700">收藏喜欢的问答内容，添加个人笔记，建立专属的智慧库</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 精选问答 */}
+        <section className="py-16 bg-gradient-to-br from-amber-50 to-orange-100">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-amber-900 text-center mb-12">精选问答</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {featuredQuestions.map((item) => (
+                <div key={item.id} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-lg font-semibold text-amber-900 flex-1">{item.question}</h3>
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm ml-3">
+                      {item.category}
+                    </span>
+                  </div>
+                  <p className="text-amber-800 mb-4 leading-relaxed">{item.preview}</p>
+                  <div className="flex justify-between items-center">
+                    <button className="text-amber-600 hover:text-amber-700 font-medium">
+                      阅读全文
                     </button>
-                  ))}
+                    <button className="text-amber-600 hover:text-amber-700">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="text-center">
-                <button
-                  type="submit"
-                  disabled={!question.trim() || isLoading}
-                  className="bg-amber-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
-                >
-                  {isLoading ? '生成中...' : '生成策略'}
-                </button>
-              </div>
-            </form>
+              ))}
+            </div>
             
-            {isLoading && (
-              <div className="mt-8 text-center">
-                <div className="inline-flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600"></div>
-                  <span className="text-amber-700">正在从古籍中寻找智慧...</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Examples Section */}
-        <section id="examples" className="py-16 bg-amber-50">
-          <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-amber-900 mb-12">示例解答</h2>
-            
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <div className="bg-amber-100 border-l-4 border-amber-600 p-6 mb-8">
-                <p className="text-amber-800 text-lg italic mb-2">
-                  韩非子曾说："势不可失，失不再来。"又说："明主之道，能因时而制宜。"
-                </p>
-                <p className="text-amber-600 font-medium">—— 《韩非子》</p>
-              </div>
-              
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-2xl font-bold text-amber-900 mb-4">核心逻辑</h3>
-                  <p className="text-gray-700 text-lg leading-relaxed">
-                    要抓住有利时机，因地制宜，灵活应对。
-                  </p>
-                </div>
-                
-                <div>
-                  <h3 className="text-2xl font-bold text-amber-900 mb-4">历史案例</h3>
-                  <p className="text-gray-700 text-lg leading-relaxed">
-                    战国时期，赵国名将赵奢面对秦军入侵，没有立即应战，而是先稳住军心、调动兵力。等秦军深入腹地、补给线拉长时，赵奢突然发起攻击，大破秦军。
-                  </p>
-                </div>
-                
-                <div>
-                  <h3 className="text-2xl font-bold text-amber-900 mb-4">照进现实</h3>
-                  <p className="text-gray-700 text-lg leading-relaxed mb-4">
-                    如果竞争对手疯狂降价，你可以笑着看他烧钱，不急着跟进。当他资金链吃紧时，你再推出杀手锏产品，一击制胜。
-                  </p>
-                  <p className="text-gray-700 text-lg leading-relaxed">
-                    比如，你先在内部会议上低调表态"我们保持策略稳定"，同时秘密筹备高性价比新品。等对手露出疲态，你的新品上市直接截胡客户。
-                  </p>
-                </div>
-                
-                <div className="bg-red-50 border-l-4 border-red-500 p-6">
-                  <h3 className="text-2xl font-bold text-red-800 mb-4">风险提示</h3>
-                  <p className="text-red-700 text-lg leading-relaxed">
-                    但要记住，等待不是坐以待毙。北宋末年，王安石误判形势，面对辽军挑衅迟迟不动，导致士气低落、失去战略要地。
-                  </p>
-                </div>
-              </div>
+            <div className="text-center mt-8">
+              <Link 
+                href="/ask-question" 
+                className="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium"
+              >
+                查看更多问答
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* About Section */}
-        <section id="about" className="py-16 bg-white">
-          <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center text-amber-900 mb-12">关于方略</h2>
-            
-            <div className="max-w-4xl mx-auto text-center mb-12">
-              <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                方略是一个基于中国古籍智慧的策略生成工具，旨在帮助现代人快速获取古代智慧并应用到当下问题中。
-              </p>
-              <p className="text-lg text-gray-700 leading-relaxed">
-                我们的目标是在30秒内为您生成可执行的策略，内容基于中国古籍真实内容，并提供对应出处。
-              </p>
+        {/* 古籍典藏 */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-amber-900 text-center mb-12">古籍典藏</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { name: '论语', author: '孔子', desc: '儒家经典' },
+                { name: '道德经', author: '老子', desc: '道家经典' },
+                { name: '孙子兵法', author: '孙武', desc: '兵家经典' },
+                { name: '大学', author: '曾子', desc: '四书之一' },
+                { name: '中庸', author: '子思', desc: '儒家经典' },
+                { name: '孟子', author: '孟子', desc: '儒家经典' },
+                { name: '史记', author: '司马迁', desc: '史学经典' },
+                { name: '资治通鉴', author: '司马光', desc: '编年史书' }
+              ].map((book, index) => (
+                <div key={index} className="text-center p-4 border border-amber-200 rounded-lg hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-16 bg-amber-100 rounded mx-auto mb-3 flex items-center justify-center">
+                    <span className="text-amber-700 font-bold text-lg">书</span>
+                  </div>
+                  <h3 className="font-semibold text-amber-900 mb-1">{book.name}</h3>
+                  <p className="text-amber-700 text-sm mb-1">{book.author}</p>
+                  <p className="text-amber-600 text-xs">{book.desc}</p>
+                </div>
+              ))}
             </div>
-            
-            <div>
-              <h3 className="text-2xl font-bold text-center text-amber-900 mb-8">书库列表</h3>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div className="bg-amber-50 rounded-lg p-6">
-                  <h4 className="text-xl font-bold text-amber-800 mb-4">行正持礼</h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>《论语》</li>
-                    <li>《孟子》</li>
-                    <li>《礼记》</li>
-                    <li>《近思录》</li>
-                    <li>《传习录》</li>
-                  </ul>
-                </div>
-                
-                <div className="bg-blue-50 rounded-lg p-6">
-                  <h4 className="text-xl font-bold text-blue-800 mb-4">顺势而为</h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>《道德经》</li>
-                    <li>《庄子》</li>
-                    <li>《淮南子》</li>
-                  </ul>
-                </div>
-                
-                <div className="bg-green-50 rounded-lg p-6">
-                  <h4 className="text-xl font-bold text-green-800 mb-4">巧谋实战</h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>《孙子兵法》</li>
-                    <li>《三十六计》</li>
-                    <li>《鬼谷子》</li>
-                  </ul>
-                </div>
-                
-                <div className="bg-purple-50 rounded-lg p-6">
-                  <h4 className="text-xl font-bold text-purple-800 mb-4">运筹帷幄</h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>《韩非子》</li>
-                    <li>《商君书》</li>
-                    <li>《盐铁论》</li>
-                  </ul>
-                </div>
+          </div>
+        </section>
+
+        {/* 使用统计 */}
+        <section className="py-16 bg-amber-900 text-white">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-4xl font-bold mb-2">8+</div>
+                <div className="text-amber-200">古籍典藏</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold mb-2">1000+</div>
+                <div className="text-amber-200">智慧问答</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold mb-2">5000+</div>
+                <div className="text-amber-200">用户收藏</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold mb-2">24/7</div>
+                <div className="text-amber-200">智能服务</div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* 名言警句 */}
+        <section className="py-16 bg-gradient-to-r from-amber-100 to-orange-100">
+          <div className="container mx-auto px-4 text-center">
+            <blockquote className="text-2xl md:text-3xl font-bold text-amber-900 mb-4">
+              "学而时习之，不亦说乎？"
+            </blockquote>
+            <p className="text-amber-700 text-lg">—— 《论语·学而》</p>
+            <p className="text-amber-600 mt-4 max-w-2xl mx-auto">
+              学习古代智慧，并在现代生活中实践，这本身就是一种快乐。方略致力于让古籍智慧在现代焕发新的生命力。
+            </p>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-amber-900 text-white py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">方略</h2>
-              <p className="text-amber-200">古籍智慧，现代应用</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">快速链接</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-amber-200 hover:text-white">首页</a></li>
-                <li><a href="#ask-section" className="text-amber-200 hover:text-white">提问</a></li>
-                <li><a href="#examples" className="text-amber-200 hover:text-white">示例</a></li>
-                <li><a href="#about" className="text-amber-200 hover:text-white">关于</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-amber-800 mt-8 pt-8 text-center">
-            <p className="text-amber-200">&copy; 2024 方略. 保留所有权利。</p>
-          </div>
-        </div>
-      </footer>
+      {/* 页脚 */}
+      <Footer />
     </div>
-  )
+  );
 }
